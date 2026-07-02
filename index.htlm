@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<base target="_top">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Sarabun:wght@300;400;600&display=swap');
+body { font-family: 'Sarabun', sans-serif; padding: 20px; background-color: #f4f6f9; color: #333; line-height: 1.6; }
+.container { max-width: 850px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+h2 { color: #2c3e50; border-bottom: 2px solid #3498db; padding-bottom: 10px; margin-bottom: 20px; text-align: center; }
+h3 { color: #2980b9; margin-top: 0; }
+
+/* โครงสร้างหน้า Page */
+.page { display: none; animation: fadeIn 0.3s; }
+.page.active { display: block; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+/* ฟอร์มข้อมูลผู้ป่วย */
+.form-group { margin-bottom: 20px; }
+.form-group label.title { font-weight: 600; color: #34495e; font-size: 1.05em; display: block; margin-bottom: 8px; }
+.radio-group, .checkbox-group { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 5px;}
+.radio-group label, .checkbox-group label { font-weight: normal; font-size: 1em; color: #333; display: flex; align-items: center; gap: 5px; cursor: pointer;}
+.inline-input { display: inline-block !important; width: 200px !important; margin-left: 10px; padding: 5px 10px !important;}
+input[type="text"], input[type="number"], select { width: 100%; padding: 10px; font-size: 15px; border: 1px solid #bdc3c7; border-radius: 4px; box-sizing: border-box; font-family: inherit;}
+
+/* ระบบประเมินยา */
+.question-box { background-color: #fdfefe; border: 1px solid #dcdde1; border-left: 4px solid #3498db; padding: 20px; margin-bottom: 15px; border-radius: 6px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+.question-text { font-size: 1.1em; margin-bottom: 15px; font-weight: 400; color: #2c3e50; }
+.btn-group { display: flex; gap: 10px; margin-bottom: 10px; }
+button { flex: 1; padding: 12px; font-size: 16px; border: 1px solid transparent; border-radius: 4px; cursor: pointer; font-weight: bold; font-family: inherit; transition: all 0.2s; }
+.btn-outline-yes { background-color: white; color: #e74c3c; border-color: #e74c3c; }
+.btn-outline-yes:hover, .btn-outline-yes.active { background-color: #e74c3c; color: white; }
+.btn-outline-no { background-color: white; color: #2ecc71; border-color: #2ecc71; }
+.btn-outline-no:hover, .btn-outline-no.active { background-color: #2ecc71; color: white; }
+.stop-result { font-size: 1.1em; padding: 15px; border-radius: 4px; display: none; margin-top: 10px; background-color: #fadbd8; border: 1px dashed #e74c3c; color: #c0392b; font-weight: bold; }
+.added-drug-card { background: #e8f4f8; padding: 15px; margin-bottom: 10px; border-radius: 6px; border-left: 4px solid #3498db; }
+
+hr { border: 0; height: 1px; background: #ddd; margin: 30px 0; }
+.footer { text-align: center; margin-top: 40px; padding-top: 20px; border-top: 1px dashed #bdc3c7; font-size: 0.9em; color: #7f8c8d; }
+
+.calc-grid { display: flex; gap: 15px; margin-bottom: 15px; flex-wrap: wrap; }
+.calc-item { flex: 1; min-width: 140px; display: none; }
+.calc-item label { font-size: 0.9em; margin-bottom: 5px; color: #2c3e50; font-weight: bold;}
+.dose-result { background-color: #f8f9f9; padding: 15px; border-radius: 4px; border: 1px solid #dcdde1; font-size: 1.05em; margin-bottom: 15px;}
+.manual-rule-text { font-size: 1.05em; color: #2980b9; font-weight: 600; white-space: pre-wrap; line-height: 1.6; margin-bottom: 15px; padding: 15px; background-color: #e8f4f8; border-radius: 4px; border-left: 4px solid #3498db; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<div id="page1" class="page active">
+  <h2>แบบบันทึกข้อมูลผู้ป่วยสูงอายุ<br><small style="font-size: 0.6em; color: #7f8c8d;">โรงพยาบาลส่งเสริมสุขภาพตำบลบ้านนาท่อม อ.เมือง จ.พัทลุง</small></h2>
+  
+  <div class="question-box">
+    <h3>ข้อมูลพื้นฐาน</h3>
+    
+    <div class="form-group">
+      <label class="title">ชื่อ สกุล</label>
+      <input type="text" id="p_name" placeholder="ระบุชื่อและนามสกุล">
+    </div>
+    
+    <div class="form-group">
+      <label class="title">อายุ (ปี)</label>
+      <input type="number" id="p_age" placeholder="ระบุอายุ">
+    </div>
+    
+    <div class="form-group">
+      <label class="title">เพศ</label>
+      <div class="radio-group">
+        <label><input type="radio" name="p_gender" value="ชาย"> ชาย</label>
+        <label><input type="radio" name="p_gender" value="หญิง"> หญิง</label>
+      </div>
+    </div>
+    
+    <div class="form-group">
+      <label class="title">โรคประจำตัว (เลือกได้มากกว่า 1)</label>
+      <div class="checkbox-group">
+        <label><input type="checkbox" class="p_ud" value="DM"> DM</label>
+        <label><input type="checkbox" class="p_ud" value="HT"> HT</label>
+        <label><input type="checkbox" class="p_ud" value="DLP"> DLP</label>
+        <label><input type="checkbox" class="p_ud" value="CKD"> CKD</label>
+        <label>
+          <input type="checkbox" id="p_ud_others_check" value="Others" onchange="document.getElementById('p_ud_others').style.display = this.checked ? 'inline-block' : 'none'"> Others
+          <input type="text" id="p_ud_others" class="inline-input" style="display:none;" placeholder="ระบุโรคประจำตัวอื่นๆ...">
+        </label>
+      </div>
+    </div>
+    
+    <div class="form-group">
+      <label class="title">ประวัติแพ้ยา</label>
+      <div class="radio-group">
+        <label><input type="radio" name="p_allergy" value="Yes"> Yes</label>
+        <label><input type="radio" name="p_allergy" value="No"> No</label>
+      </div>
+    </div>
+    
+    <div class="form-group">
+      <label class="title">การใช้ผลิตภัณฑ์สุขภาพ</label>
+      <div class="radio-group">
+        <label><input type="radio" name="p_supp" value="Yes"> Yes</label>
+        <label><input type="radio" name="p_supp" value="No"> No</label>
+      </div>
+    </div>
+    
+    <div class="form-group">
+      <label class="title">ประวัติหกล้มใน 1 ปีที่ผ่านมา (ครั้ง)</label>
+      <input type="number" id="p_falls" placeholder="จำนวนครั้ง">
+    </div>
+    
+    <div class="form-group">
+      <label class="title">จำนวนรายการยาต่อวัน (รายการ)</label>
+      <input type="number" id="p_items" placeholder="จำนวนรายการยา">
+    </div>
+    
+    <div class="form-group">
+      <label class="title">จำนวนยาต่อวัน (เม็ด)</label>
+      <input type="number" id="p_pills" placeholder="จำนวนเม็ดยา">
+    </div>
+  </div>
+  
+  <button style="background-color: #3498db; color: white; width: 100%; border:none; padding:15px;" onclick="goToPage('page2')">ประเมินการใช้ยา ➡️</button>
+</div>
+
+<div id="page2" class="page">
+  <h2>ระบบประเมินการใช้ยาที่มีความเสี่ยงในผู้สูงอายุ</h2>
+  <button style="margin-bottom: 20px; background-color: #95a5a6; color:white; padding: 8px; width:auto; font-size:14px;" onclick="goToPage('page1')">⬅️ กลับไปหน้าข้อมูลพื้นฐาน</button>
+  
+  <div id="addedDrugsContainer" style="display:none; margin-bottom: 25px;">
+     <h3 style="color:#d35400;">รายการยาที่ประเมินแล้ว:</h3>
+     <div id="addedDrugsList"></div>
+  </div>
+
+  <div class="question-box" style="border-left-color: #9b59b6;">
+      <label class="title" for="drugInput">ค้นหาและเลือกรายการยาที่ต้องการประเมิน:</label>
+      <input type="text" id="drugInput" list="drugList" placeholder="พิมพ์ชื่อยา หรือ กลุ่มยา..." oninput="onDrugSelect()">
+      <datalist id="drugList"></datalist>
+
+      <div id="specificCriteriaContainer"></div>
+
+      <div id="doseSectionContainer" style="display: none;">
+        <hr>
+        <div class="question-text" style="font-weight: bold; margin-bottom: 15px;">ประเมินขนาดยา (Dosage Evaluation)</div>
+
+        <div id="autoDoseArea">
+          <div class="calc-grid">
+            <div class="calc-item" id="box-dose"><label>ขนาดยา (mg/day)</label><input type="number" id="inp-dose" step="any" placeholder="ระบุตัวเลข" oninput="evaluateDose()"></div>
+            <div class="calc-item" id="box-crcl"><label>CrCl (mL/min)</label><input type="number" id="inp-crcl" step="any" placeholder="เช่น 45" oninput="evaluateDose()"></div>
+            <div class="calc-item" id="box-egfr"><label>eGFR</label><input type="number" id="inp-egfr" step="any" placeholder="เช่น 60" oninput="evaluateDose()"></div>
+            <div class="calc-item" id="box-cp"><label>Child-Pugh</label><select id="inp-cp" onchange="evaluateDose()"><option value="None" selected>None</option><option value="A">A (mild)</option><option value="B">B (moderate)</option><option value="C">C (severe)</option></select></div>
+            <div class="calc-item" id="box-alt"><label>ALT</label><select id="inp-alt" onchange="evaluateDose()"><option value="">-- เลือก --</option><option value="normal">normal</option><option value=">2">>2 time UNL</option><option value=">3">>3 time UNL</option></select></div>
+          </div>
+          <div id="doseResultMsg" class="dose-result"><span style="color:#e67e22; font-weight:bold;">กรุณาระบุข้อมูลให้ครบถ้วน</span></div>
+        </div>
+
+        <div id="manualDoseArea" style="display: none;">
+          <div id="manualDoseText" class="manual-rule-text"></div>
+          <div class="btn-group">
+            <button class="btn-outline-no" id="btn-man-dose-yes" onclick="answerManualDose(true)">ขนาดยาเหมาะสม</button>
+            <button class="btn-outline-yes" id="btn-man-dose-no" onclick="answerManualDose(false)">ขนาดยาไม่เหมาะสม</button>
+          </div>
+        </div>
+      </div>
+      
+      <button style="background-color: #f39c12; color: white; border: none; width: 100%; margin-top: 15px; font-size: 1.1em;" onclick="addCurrentDrug()">➕ บันทึกผลการประเมิน และประเมินรายการยาถัดไป</button>
+  </div>
+
+  <button style="background-color: #2ecc71; color: white; border: none; width: 100%; padding: 15px;" onclick="goToPage('page3')">Intervention ➡️</button>
+</div>
+
+<div id="page3" class="page">
+  <h2>Intervention</h2>
+  <button style="margin-bottom: 20px; background-color: #95a5a6; color:white; padding: 8px; width:auto; font-size:14px;" onclick="goToPage('page2')">⬅️ กลับไปหน้าประเมินการใช้ยา</button>
+  
+  <div class="question-box" style="border-left-color: #27ae60;">
+    <div class="form-group">
+      <label class="title">เลือก Intervention (เลือกได้มากกว่า 1)</label>
+      <div class="checkbox-group" style="flex-direction: column;">
+        <label><input type="checkbox" class="p_interv" value="No intervention"> No intervention</label>
+        <label><input type="checkbox" class="p_interv" value="Stop medication"> Stop medication</label>
+        <label><input type="checkbox" class="p_interv" value="Adjust medication dosage"> Adjust medication dosage</label>
+        <label>
+          <input type="checkbox" id="p_interv_others_check" value="Others" onchange="document.getElementById('p_interv_others').style.display = this.checked ? 'inline-block' : 'none'"> Others
+          <input type="text" id="p_interv_others" class="inline-input" style="display:none;" placeholder="ระบุ Intervention...">
+        </label>
+      </div>
+    </div>
+  </div>
+  
+  <button id="btnSave" style="background-color: #16a085; color: white; border: none; width: 100%; font-size: 1.2em; padding:15px;" onclick="submitData()">💾 บันทึกข้อมูลทั้งหมด</button>
+</div>
+
+<div class="footer">
+พัฒนาโดย นศภ.สฤษณ์พงศ์ แก้วหมุน <br> (งานเภสัชกรรมปฐมภูมิ โรงพยาบาลพัทลุง)
+</div>
+</div>
+
+<script>
+/* ================== SCRIPT DATA ================== */
+const drugDatabase = {
+"Hyoscine-n-butyl bromide": ["Anticholinergic", "Anticholinergics"], "Trihexyphenidyl": ["Anticholinergic", "Anticholinergics", "trihexyphenidyl"], "Omeprazole": ["PPI", "omeprazole"], "Digoxin": ["Digoxin", "digoxin"], "Furosemide": ["Furosemide", "furosemide"], "HCTZ": ["HCTZ", "hctz", "hydrochlorothiazide"], "Spironolactone": ["Spironolactone", "spironolactone"], "Amiloride/HCTZ": ["Amiloride/HCTZ", "amiloride"], "Atenolol": ["Beta-blocker", "Beta-blockers", "atenolol"], "Propranolol": ["Beta-blocker", "Beta-blockers", "Non-selective BB", "propranolol"], "Metoprolol": ["Beta-blocker", "Beta-blockers", "metoprolol"], "Carvedilol": ["Beta-blocker", "Beta-blockers", "Non-selective BB", "carvedilol"], "Bisoprolol": ["Beta-blocker", "Beta-blockers", "bisoprolol"], "Methyldopa": ["Methyldopa", "methyldopa"], "Prazosin": ["Alpha1-blockers", "Alpha1-blocker", "prazosin"], "Doxazosin": ["Alpha1-blockers", "Alpha1-blocker", "doxazosin"], "Alfuzosin": ["Alpha1-blockers", "Alpha1-blocker", "alfuzosin"], "Enalapril": ["ACEI", "enalapril"], "Captopril": ["ACEI", "captopril"], "Losartan": ["ARB", "losartan"], "Valsartan": ["ARB", "valsartan"], "Verapamil": ["Verapamil", "verapamil"], "Aspirin": ["Antiplatelet", "aspirin"], "Clopidogrel": ["Antiplatelet", "clopidogrel"], "Simvastatin": ["Statin", "simvastatin"], "Atorvastatin": ["Statin", "atorvastatin"], "Rosuvastatin": ["Statin", "rosuvastatin"], "Theophylline": ["Theophylline", "theophylline"], "Chlorpheniramine": ["Antihistamine รุ่นที่ 1", "chlorpheniramine"], "Hydroxyzine": ["Antihistamine รุ่นที่ 1", "hydroxyzine"], "Dimenhydrinate": ["Antihistamine รุ่นที่ 1", "dimenhydrinate"], "Diazepam": ["Benzodiazepine", "diazepam"], "Lorazepam": ["Benzodiazepine", "lorazepam"], "Clonazepam": ["Benzodiazepine", "clonazepam"], "Clorazepate": ["Benzodiazepine", "clorazepate"], "Alprazolam": ["Benzodiazepine", "alprazolam"], "Haloperidol": ["Antipsychotic", "haloperidol"], "Risperidone": ["Antipsychotic", "risperidone"], "Fluphenazine": ["Antipsychotic", "fluphenazine"], "Amitriptyline": ["TCA", "Antidepressant", "amitriptyline"], "Nortriptyline": ["TCA", "Antidepressant", "nortriptyline"], "Sertraline": ["SSRI", "Antidepressant", "sertraline"], "Metoclopramide": ["Metoclopramide", "metoclopramide"], "Paracetamol": ["Paracetamol", "paracetamol"], "Tramadol": ["Opioid", "tramadol"], "Gabapentin": ["Gabapentin", "gabapentin"], "Pregabalin": ["Pregabalin", "pregabalin"], "Phenobarbital": ["Antiseizure", "phenobarbital"], "Phenytoin": ["Antiseizure", "phenytoin"], "Sodium valproate": ["Antiseizure", "sodium valproate"], "Levodopa/benserazide": ["Levodopa", "levodopa"], "Ciprofloxacin": ["Ciprofloxacin", "ciprofloxacin"], "Norfloxacin": ["Norfloxacin", "norfloxacin"], "Ofloxacin" : ["Ofloxacin", "ofloxacin"], "Azithromycin": ["Azithromycin", "azithromycin"], "Erythromycin": ["Erythromycin", "erythromycin"], "Roxithromycin": ["Roxithromycin", "roxithromycin"], "Glipizide": ["Glipizide", "glipizide"], "Metformin": ["Metformin", "metformin"], "Pioglitazone": ["Pioglitazone", "pioglitazone"], "Levothyroxine": ["Levothyroxine", "levothyroxine"], "Prednisolone": ["Steroid", "steroid", "prednisolone"], "Dexamethasone": ["Steroid", "steroid", "dexamethasone"], "Diclofenac": ["NSAID", "Traditional NSAID", "diclofenac"], "Ibuprofen": ["NSAID", "Traditional NSAID", "ibuprofen"], "Naproxen": ["NSAID", "Traditional NSAID", "naproxen"], "Celecoxib": ["NSAID", "COX-2 selective NSAID", "celecoxib"], "Mefenamic acid": ["NSAID", "Traditional NSAID", "mefenamic acid"], "Meloxicam": ["NSAID", "Traditional NSAID", "meloxicam"], "Etoricoxib": ["NSAID", "COX-2 selective NSAID", "etoricoxib"], "Allopurinol": ["Allopurinol", "allopurinol"], "Colchicine": ["Colchicine", "colchicine"], "Baclofen": ["Muscle relaxant", "baclofen"], "Tolperisone": ["Muscle relaxant", "tolperisone"], "Ferrous fumarate (FeF)": ["Ferrous fumarate (FeF)", "FeF", "ferrous fumarate"], "Amoxicillin": ["Amoxicillin", "amoxicillin"], "Amoxicillin/Clavulanate": ["Amoxicillin/Clavulanate", "amoxicllin/clavulanate"],
+"Anticholinergic": ["Anticholinergic", "Anticholinergics"], "PPI": ["PPI"], "Beta-blocker": ["Beta-blocker", "Beta-blockers"], "Non-selective BB": ["Non-selective BB"], "Alpha1-blockers": ["Alpha1-blockers", "Alpha1-blocker"], "ACEI": ["ACEI"], "ARB": ["ARB"], "Antiplatelet": ["Antiplatelet"], "Statin": ["Statin"], "Antihistamine รุ่นที่ 1": ["Antihistamine รุ่นที่ 1"], "Benzodiazepine": ["Benzodiazepine", "benzodiazepines"], "Antipsychotic": ["Antipsychotic"], "TCA": ["TCA"], "SSRI": ["SSRI"], "Antidepressant": ["Antidepressant"], "Opioid": ["Opioid"], "Antiseizure": ["Antiseizure"], "Levodopa": ["Levodopa"], "Steroid": ["Steroid", "steroid"], "NSAID": ["NSAID"], "Traditional NSAID": ["Traditional NSAID", "traditional NSAID"], "COX-2 selective NSAID": ["COX-2 selective NSAID"], "Muscle relaxant": ["Muscle relaxant"]
+};
+
+const stoppRules = [
+{ keywords: ["acei", "arb"], displayDrug: "ACEI หรือ ARB", condition: "ในผู้ป่วยที่มีภาวะ hyperkalemia (serum K > 5.5 mmol/L) <strong>(1a)</strong>", reason: "เพิ่มความเสี่ยงต่อภาวะหัวใจเต้นผิดจังหวะ", ref: "STOPP criteria" },
+{ keywords: ["acei", "arb"], displayDrug: "ACEI หรือ ARB", condition: "ในผู้ที่มี serum creatinine เพิ่มขึ้น > 30% ภายใน 4 สัปดาห์ หลังจากเริ่มยาหรือปรับขนาดยา <strong>(1b)</strong>", reason: "ยาอาจทำให้ serum creatinine เพิ่มขึ้น และเพิ่มความเสี่ยงต่อ AKI", ref: "สมาคมโรคไตแห่งประเทศไทย" },
+{ keywords: ["alpha1-blocker", "alpha1-blockers"], displayDrug: "Alpha1-blocker", condition: "ในผู้ที่มีประวัติหกล้มซ้ำ หรือมีความดันโลหิตต่ำเมื่อเปลี่ยนท่า (SBP drop > 20 mmHg และ/หรือ DBP drop > 10 mmHg) <strong>(2a)</strong>", reason: "เพิ่มความเสี่ยงต่อหกล้มซ้ำ", ref: "STOPP criteria" },
+{ keywords: ["anticholinergic", "anticholinergics"], displayDrug: "Anticholinergic", condition: "ในผู้ที่มีภาวะเพ้อหรือสมองเสื่อม <strong>(3a)</strong>", reason: "เพิ่มความเสี่ยงต่อ cognitive impairment รุนแรงขึ้น", ref: "STOPP criteria" },
+{ keywords: ["anticholinergic", "anticholinergics"], displayDrug: "Anticholinergic", condition: "ร่วมกันมากกว่า 1 ชนิด <strong>(3b)</strong>", reason: "เสี่ยงต่อการล้ม, ความจำแย่ลง, เพ้อ", ref: "Beers criteria" },
+{ keywords: ["anticholinergic", "fef", "ferrous fumarate (fef)", "opioid", "verapamil"], displayDrug: "Anticholinergic, FeF, opioid, verapamil", condition: "ในผู้ที่มีอาการท้องผูกเรื้อรัง ซึ่งสามารถใช้ยาทางเลือกอื่นที่ไม่ทำให้ท้องผูกได้ <strong>(3c)</strong>", reason: "เพิ่มความเสี่ยงให้ท้องผูกแย่ลง", ref: "STOPP criteria" },
+{ keywords: ["antidepressant", "amitriptyline", "nortriptyline", "sertraline"], displayDrug: "Antidepressant", condition: "ในผู้ที่มีประวัติหกล้มซ้ำ <strong>(4a)</strong>", reason: "เพิ่มความเสี่ยงต่อหกล้มซ้ำ ความรู้สึกตัวลดลง", ref: "STOPP criteria" },
+{ keywords: ["antihistamine รุ่นที่ 1"], displayDrug: "Antihistamine รุ่นที่ 1", condition: "เป็นยาลำดับแรก (first-line) สำหรับโรคภูมิแพ้หรืออาการคัน <strong>(5a)</strong>", reason: "Antihistamine รุ่นที่ 2-3 ปลอดภัยกว่าและมีผลข้างเคียงน้อยกว่า จึงเหมาะสมกว่า", ref: "STOPP criteria" },
+{ keywords: ["antihistamine รุ่นที่ 1"], displayDrug: "Antihistamine รุ่นที่ 1", condition: "สำหรับ insomnia <strong>(5b)</strong>", reason: "ผลข้างเคียงสูงในผู้สูงอายุ", ref: "STOPP criteria" },
+{ keywords: ["antihistamine รุ่นที่ 1"], displayDrug: "Antihistamine รุ่นที่ 1", condition: "ในผู้ที่มีประวัติหกล้มซ้ำ <strong>(5c)</strong>", reason: "เพิ่มความเสี่ยงต่อหกล้มซ้ำ ความรู้สึกตัวลดลง", ref: "STOPP criteria" },
+{ keywords: ["aspirin"], displayDrug: "Aspirin", condition: "ขนาด > 100 mg/day ในระยะยาว <strong>(6a)</strong>", reason: "เพิ่มความเสี่ยง bleeding โดยไม่มีหลักฐานถึงประสิทธิภาพที่เพิ่มขึ้น", ref: "STOPP criteria" },
+{ keywords: ["aspirin"], displayDrug: "Aspirin", condition: "สำหรับ primary CVD prevention <strong>(6b)</strong>", reason: "ไม่มีหลักฐานถึงประโยชน์", ref: "STOPP criteria" },
+{ keywords: ["aspirin", "clopidogrel"], displayDrug: "Aspirin ร่วมกับ Clopidogrel", condition: "สำหรับ secondary stroke prevention เป็นระยะเวลา > 4 สัปดาห์ ยกเว้นในผู้ที่ใส่ coronary stent ในช่วง 12 เดือนที่ผ่านมา มี ACS ร่วมด้วย หรือมี symptomatic carotid arterial stenosis <strong>(6c)</strong>", reason: "ไม่มีหลักฐานของประโยชน์ระยะยาวเมื่อเทียบกับการใช้ clopidogrel เพียงอย่างเดียว", ref: "STOPP criteria" },
+{ keywords: ["antiplatelet", "anticoagulant"], displayDrug: "Antiplatelet, Anticoagulant", condition: "ในภาวะที่มีความเสี่ยงสูงต่อ major bleeding เช่น uncontrolled severe hypertension, ภาวะเลือดออกง่าย หรือมีเลือดออกเอง (spontaneous bleeding) ที่รุนแรงเมื่อไม่นานมานี้ <strong>(6d)</strong>", reason: "มีความเสี่ยงสูงต่อ major bleeding", ref: "STOPP criteria" },
+{ keywords: ["antiplatelet", "anticoagulant"], displayDrug: "Antiplatelet ร่วมกับ Anticoagulant", condition: "ในผู้ที่มี AF ยกเว้นผู้ที่ได้รับการใส่ coronary stent หรือได้ทำ angiography พบว่ามีการตีบรุนแรง (มากกว่า 50%) <strong>(6e)</strong>", reason: "ไม่ได้รับประโยชน์เพิ่มเติมจาก Antiplatelet", ref: "STOPP criteria" },
+{ keywords: ["antiplatelet", "anticoagulant"], displayDrug: "Antiplatelet ร่วมกับ Anticoagulant", condition: "ในโรคหลอดเลือดหัวใจ โรคหลอดเลือดสมอง หรือโรคหลอดเลือดส่วนปลาย (PAD) ที่อาการคงที่ <strong>(6f)</strong>", reason: "ไม่มีหลักฐานถึงประโยชน์เพิ่มเติมจากการรักษาแบบควบคู่", ref: "STOPP criteria" },
+{ keywords: ["antiplatelet"], displayDrug: "Antiplatelet", condition: "แทน Anticoagulant สำหรับ stroke prevention ใน AF <strong>(6g)</strong>", reason: "ไม่มีหลักฐานถึงประสิทธิภาพ", ref: "STOPP criteria" },
+{ keywords: ["fluphenazine"], displayDrug: "Fluphenazine", condition: "ในผู้ที่มีประวัติอาการทางเดินปัสสาวะที่เกี่ยวข้องกับโรค BPH หรือมีประวัติปัสสาวะคั่ง <strong>(7a)</strong>", reason: "ความเสี่ยงต่อปัสสาวะคั่ง", ref: "STOPP criteria" },
+{ keywords: ["antipsychotic"], displayDrug: "Antipsychotic", condition: "ในผู้ที่มีประวัติโรคหลอดเลือดหัวใจ หลอดเลือดสมอง หรือหลอดเลือดส่วนปลาย <strong>(7b)</strong>", reason: "เพิ่มความเสี่ยงต่อการเกิดลิ่มเลือด", ref: "STOPP criteria" },
+{ keywords: ["antipsychotic"], displayDrug: "Antipsychotic", condition: "ในผู้ที่มีอาการทางพฤติกรรมและจิตใจจากภาวะสมองเสื่อม (BPSD) เป็นระยะเวลา > 12 สัปดาห์ ยกเว้นมีอาการ BPSD ที่รุนแรงและล้มเหลวจากการรักษาด้วยยาอื่น <strong>(7c)</strong>", reason: "เพิ่มความเสี่ยงต่อ stroke, MI", ref: "STOPP criteria" },
+{ keywords: ["antipsychotic"], displayDrug: "Antipsychotic", condition: "เป็นยาช่วยนอนหลับ ยกเว้นอาการนอนไม่หลับที่เกิดจากโรคจิตหรือผลจาก BPSD ของภาวะสมองเสื่อม <strong>(7d)</strong>", reason: "เพิ่มความเสี่ยงต่ออาการสับสน, ความดันโลหิตต่ำ, extra-pyramidal, หกล้ม", ref: "STOPP criteria" },
+{ keywords: ["antipsychotic"], displayDrug: "Antipsychotic", condition: "ในผู้ที่มีภาวะกลืนลำบาก <strong>(7e)</strong>", reason: "เพิ่มความเสี่ยงต่อภาวะปอดอักเสบจากการสำลัก", ref: "STOPP criteria" },
+{ keywords: ["antipsychotic"], displayDrug: "Antipsychotic", condition: "ในผู้ที่มีประวัติหกล้มซ้ำ <strong>(7f)</strong>", reason: "อาจทำให้หกล้มซ้ำจากอาการพาร์กินโซนิซึม", ref: "STOPP criteria" },
+{ keywords: ["phenytoin"], displayDrug: "Phenytoin", condition: "ร่วมกับ TMP/SMZ <strong>(8a)</strong>", reason: "เพิ่มความเสี่ยงต่อ Phenytoin toxicity", ref: "Beers criteria" },
+{ keywords: ["antiseizure"], displayDrug: "Antiseizure", condition: "ในผู้ที่มีประวัติหกล้มซ้ำ <strong>(8b)</strong>", reason: "เพิ่มความเสี่ยงต่อหกล้มซ้ำ ความรู้สึกตัวลดลง", ref: "STOPP criteria" },
+{ keywords: ["benzodiazepine", "benzodiazepines"], displayDrug: "Benzodiazepine", condition: "เป็นระยะเวลานาน 4 สัปดาห์ขึ้นไป โดยไม่มีข้อบ่งใช้ <strong>(9a)</strong>", reason: "อาจทำให้สับสน, การทรงตัวบกพร่อง, หกล้ม **ควรค่อยๆ หยุดยา benzodiazepine ทุกชนิด หากรับประทานนานกว่า 4 สัปดาห์", ref: "STOPP criteria" },
+{ keywords: ["benzodiazepine", "benzodiazepines"], displayDrug: "Benzodiazepine", condition: "สำหรับอาการกระสับกระส่าย (agitation) หรืออาการทางจิตจากภาวะสมองเสื่อม <strong>(9b)</strong>", reason: "ไม่มีหลักฐานถึงประสิทธิภาพ", ref: "STOPP criteria" },
+{ keywords: ["benzodiazepine", "benzodiazepines"], displayDrug: "Benzodiazepine", condition: "สำหรับ insomnia เป็นระยะเวลานาน 2 สัปดาห์ขึ้นไป <strong>(9c)</strong>", reason: "อาจทำให้สับสน, การทรงตัวบกพร่อง, หกล้ม", ref: "STOPP criteria" },
+{ keywords: ["benzodiazepine", "benzodiazepines"], displayDrug: "Benzodiazepines", condition: "ในผู้มี respiratory failure (pO2 < 8.0 kPa ± pCO2 > 6.5 kPa) <strong>(9d)</strong>", reason: "อาจทำให้ respiratory failure แย่ลง", ref: "STOPP criteria" },
+{ keywords: ["benzodiazepine", "benzodiazepines"], displayDrug: "Benzodiazepine", condition: "ในผู้ที่มีประวัติหกล้มซ้ำ <strong>(9e)</strong>", reason: "เพิ่มความเสี่ยงต่อหกล้มซ้ำ", ref: "STOPP criteria" },
+{ keywords: ["beta-blocker", "beta-blockers"], displayDrug: "Beta-blocker", condition: "ร่วมกับ verapamil <strong>(10a)</strong>", reason: "ความเสี่ยงต่อ first-, second-, or third-degree AV block (incidence 10%)", ref: "STOPP criteria" },
+{ keywords: ["beta-blocker", "beta-blockers", "verapamil", "digoxin"], displayDrug: "Beta-blocker, verapamil, digoxin", condition: "ในผู้ป่วยที่มีภาวะหัวใจเต้นช้า (< 50 bpm) หรือมีภาวะ heart block <strong>(10b)</strong>", reason: "เพิ่มความเสี่ยงต่อภาวะ heart block และภาวะหัวใจหยุดเต้น", ref: "STOPP criteria" },
+{ keywords: ["beta-blocker", "beta-blockers"], displayDrug: "Beta-blocker", condition: "monotherapy สำหรับ uncomplicated Hypertension (ไม่มีภาวะ angina pectoris, หลอดเลือดโป่งพอง (aortic aneurysm) หรือภาวะอื่นที่มีข้อบ่งใช้) <strong>(10c)</strong>", reason: "ไม่มีหลักฐานยืนยันถึงประสิทธิภาพอย่างชัดเจน", ref: "STOPP criteria" },
+{ keywords: ["non-selective bb", "propranolol", "carvedilol"], displayDrug: "Non-selective BB", condition: "ในผู้ที่มี T2DM และเกิด hypoglycemia บ่อยครั้ง <strong>(11a)</strong>", reason: "อาจบดบังอาการของ hypoglycemia", ref: "STOPP criteria" },
+{ keywords: ["colchicine"], displayDrug: "Colchicine", condition: "ในผู้ที่มีค่า eGFR < 10 ml/min/1.73m² <strong>(11b)</strong>", reason: "ความเสี่ยงต่อภาวะเป็นพิษจาก colchicine", ref: "STOPP criteria" },
+{ keywords: ["digoxin"], displayDrug: "Digoxin", condition: "สำหรับ HF with normal LVEF <strong>(12a)</strong>", reason: "ไม่มีหลักฐานที่ชัดเจนถึงประโยชน์ที่ได้รับ", ref: "STOPP criteria" },
+{ keywords: ["digoxin"], displayDrug: "Digoxin", condition: "เป็นยาลำดับแรก (first-line) สำหรับ rate control ใน AF เป็นระยะเวลานาน > 3 เดือน <strong>(12b)</strong>", reason: "เพิ่มอัตราการเสียชีวิตจากการใช้ digoxin ระยะยาว", ref: "STOPP criteria" },
+{ keywords: ["digoxin"], displayDrug: "Digoxin", condition: "ขนาด  ≥  0.125 mcg/day เป็นระยะเวลา > 90 วัน ในผู้ที่มีค่า eGFR < 30 ml/min/1.73m² <strong>(12c)</strong>", reason: "ความเสี่ยงต่อภาวะเป็นพิษจาก digoxin หากไม่มีการวัดระดับยาในพลาสมา", ref: "STOPP criteria" },
+{ keywords: ["fef", "ferrous fumarate (fef)", "ferrous fumarate"], displayDrug: "ferrous fumarate (FeF)", condition: "ขนาด > 600 mg/day <strong>(13a)</strong>", reason: "ไม่มีหลักฐานยืนยันถึงการดูดซึมธาตุเหล็กที่เพิ่มขึ้นเมื่อให้ในขนาดที่สูงกว่านี้", ref: "STOPP criteria" },
+{ keywords: ["furosemide"], displayDrug: "Furosemide", condition: "เป็นยาลำดับแรก (first-line) สำหรับ hypertension ยกเว้นมี HF ร่วมด้วย <strong>(14a)</strong>", reason: "มีทางเลือกอื่นที่ปลอดภัยและมีประสิทธิภาพมากกว่า", ref: "STOPP criteria" },
+{ keywords: ["furosemide"], displayDrug: "Furosemide", condition: "สำหรับ dependent ankle edema โดยไม่มีหลักฐานที่บ่งชี้ถึงภาวะหัวใจล้มเหลว ตับวาย หรือกลุ่มอาการทางไตหรือไตวาย <strong>(14b)</strong>", reason: "การยกขาให้สูง และ/หรือ การสวมถุงเท้ารัดมักมีความเหมาะสมกว่า", ref: "STOPP criteria" },
+{ keywords: ["furosemide"], displayDrug: "Furosemide", condition: "สำหรับ hypertension ที่มี urinary incontinence ร่วมด้วย <strong>(14c)</strong>", reason: "อาจทำให้ภาวะ urinary incontinence แย่ลง", ref: "STOPP criteria" },
+{ keywords: ["gabapentin", "pregabalin"], displayDrug: "gabapentin, pregabalin", condition: "สำหรับอาการปวดที่ไม่ได้เกิดจากเส้นประสาท <strong>(15a)</strong>", reason: "ขาดหลักฐานถึงประสิทธิภาพ", ref: "STOPP criteria" },
+{ keywords: ["hctz"], displayDrug: "HCTZ", condition: "ในผู้ป่วยที่มีภาวะ hypokalemia (serum K < 3.0 mmol/l), hyponatremia (serum Na < 130 mmol/l), hypercalcemia (adjusted serum Ca > 2.65 mmol/l) หรือมีประวัติโรคเกาต์ <strong>(16a)</strong>", reason: "ภาวะเหล่านี้อาจแย่ลงเมื่อได้รับยา", ref: "STOPP criteria" },
+{ keywords: ["amiloride/hctz", "amiloride"], displayDrug: "Amiloride/HCTZ", condition: "ในผู้ที่มีภาวะ hyperkalemia (serum K > 5.5 mmol/L) <strong>(16b)</strong>", reason: "เพิ่มความเสี่ยงต่อภาวะหัวใจเต้นผิดจังหวะ", ref: "UpToDate Lexidrug" },
+{ keywords: ["levodopa"], displayDrug: "Levodopa", condition: "สำหรับอาการสั่นที่ไม่ทราบสาเหตุ <strong>(17a)</strong>", reason: "ไม่มีหลักฐานถึงประสิทธิภาพ", ref: "STOPP criteria" },
+{ keywords: ["levodopa"], displayDrug: "Levodopa", condition: "สำหรับรักษาผลข้างเคียง extrapyramidal จากยา Antipsychotic <strong>(17b)</strong>", reason: "หลีกเลี่ยงการสั่งจ่ายยาซ้ำซ้อนอย่างไม่เหมาะสม", ref: "STOPP criteria" },
+{ keywords: ["levothyroxine"], displayDrug: "Levothyroxine", condition: "สำหรับ subclinical hypothyroidism (free T4 ปกติ, TSH สูงไม่เกิน 10 mU/L) <strong>(18a)</strong>", reason: "ไม่มีหลักฐานถึงประโยชน์ และเสี่ยงต่อภาวะไทรอยด์เป็นพิษจากยา", ref: "STOPP criteria" },
+{ keywords: ["metformin"], displayDrug: "Metformin", condition: "ในผู้ที่มีค่า eGFR < 30 ml/min/1.73m² <strong>(19a)</strong>", reason: "ความเสี่ยงต่อ lactic acidosis", ref: "STOPP criteria" },
+{ keywords: ["methyldopa"], displayDrug: "Methyldopa", condition: "ในผู้สูงอายุ <strong>(20a)</strong>", reason: "ผู้สูงอายุมักทนต่อยาได้น้อย", ref: "STOPP criteria" },
+{ keywords: ["metoclopramide"], displayDrug: "Metoclopramide", condition: "ในผู้ที่มี parkinsonism <strong>(21a)</strong>", reason: "เพิ่มความเสี่ยงให้อาการแย่ลง", ref: "STOPP criteria" },
+{ keywords: ["nsaid"], displayDrug: "NSAID", condition: "ในผู้ที่มีค่า eGFR < 50 ml/min/1.73m² <strong>(22a)</strong>", reason: "ความเสี่ยงต่อการเสื่อมของไต", ref: "STOPP criteria" },
+{ keywords: ["nsaid"], displayDrug: "NSAID", condition: "ในผู้ที่มีความดันโลหิตสูงอย่างต่อเนื่อง (SBP > 170 mmHg และ/หรือ DBP > 100 mmHg) <strong>(22b)</strong>", reason: "เพิ่มความเสี่ยงต่อความดันโลหิตสูงแย่ลง", ref: "STOPP criteria" },
+{ keywords: ["nsaid"], displayDrug: "NSAID", condition: "เป็นระยะเวลา > 3 เดือน เพื่อบรรเทาอาการปวดจากโรคข้อเสื่อม โดยที่ยังไม่ได้ลองใช้ Paracetamol <strong>(22c)</strong>", reason: "Paracetamol มีประสิทธิภาพในการบรรเทาปวดที่ดีและปลอดภัยกว่า", ref: "STOPP criteria" },
+{ keywords: ["nsaid", "colchicine"], displayDrug: "NSAID หรือ colchicine", condition: "เป็นระยะเวลา > 3 เดือน สำหรับโรคเกาต์เรื้อรัง โดยไม่มีข้อห้ามในการใช้ allopurinol, febuxostat <strong>(22d)</strong>", reason: "allopurinol, febuxostat เป็นยาป้องกันโรคเกาต์กำเริบ", ref: "STOPP criteria" },
+{ keywords: ["nsaid", "steroid"], displayDrug: "NSAID ร่วมกับ Steroid", condition: "สำหรับ rheumatoid arthritis <strong>(22e)</strong>", reason: "เพิ่มความเสี่ยงต่อ peptic ulcer", ref: "STOPP criteria" },
+{ keywords: ["nsaid", "steroid"], displayDrug: "NSAID หรือ Steroid", condition: "ใน HF ที่จำเป็นต้องใช้ยา Furosemide <strong>(22f)</strong>", reason: "เพิ่มความเสี่ยงต่อ acute HF", ref: "STOPP criteria" },
+{ keywords: ["traditional nsaid", "anticoagulant"], displayDrug: "Traditional NSAID ร่วมกับ Anticoagulant", condition: "ใช้ร่วมกัน <strong>(23a)</strong>", reason: "เพิ่มความเสี่ยงต่อเลือดรุนแรงในระบบทางเดินอาหาร", ref: "STOPP criteria" },
+{ keywords: ["traditional nsaid", "nsaid"], displayDrug: "traditional NSAID", condition: "ในผู้ที่มีประวัติ peptic ulcer หรือมีเลือดออกในทางเดินอาหาร ยกเว้นใช้ร่วมกับยา PPI หรือยา H2 blocker <strong>(23b)</strong>", reason: "ความเสี่ยงต่อ peptic ulcer กำเริบ", ref: "STOPP criteria" },
+{ keywords: ["cox-2 selective nsaid", "celecoxib", "etoricoxib"], displayDrug: "COX-2 selective NSAID", condition: "ในผู้ที่มีประวัติโรคหลอดเลือดหัวใจ หลอดเลือดสมอง หรือหลอดเลือดส่วนปลาย <strong>(24a)</strong>", reason: "เพิ่มความเสี่ยงต่อการเกิดลิ่มเลือด", ref: "STOPP criteria" },
+{ keywords: ["ppi"], displayDrug: "PPI", condition: "สำหรับ uncomplicated peptic ulcer ในขนาดการรักษาสูงสุด เป็นระยะเวลา > 8 สัปดาห์ ยกเว้นในผู้ที่ใช้ยา Steroid หรือ NSAID, มีภาวะหลอดอาหารอักเสบ หรือมีภาวะที่มีการหลั่งกรดมากผิดปกติ <strong>(25a)</strong>", reason: "เพิ่มความเสี่ยงต่อการติดเชื้อในระบบทางเดินอาหาร, กระดูกหักง่าย", ref: "STOPP criteria" },
+{ keywords: ["opioid"], displayDrug: "Opioid", condition: "ร่วมกับ Benzodiazepine <strong>(26a)</strong>", reason: "อาจกดการหายใจ", ref: "Beers criteria" },
+{ keywords: ["opioid"], displayDrug: "Opioid", condition: "เป็นระยะเวลานาน สำหรับโรคข้อเสื่อม <strong>(26b)</strong>", reason: "ขาดหลักฐานถึงประสิทธิภาพ", ref: "STOPP criteria" },
+{ keywords: ["opioid"], displayDrug: "Opioid", condition: "ในผู้ที่มีประวัติหกล้มซ้ำ <strong>(26c)</strong>", reason: "เพิ่มความเสี่ยงต่อหกล้มซ้ำ ความรู้สึกตัวลดลง", ref: "STOPP criteria" },
+{ keywords: ["opioid"], displayDrug: "Opioid", condition: "เป็นยาอันดับแรก (first-line) สำหรับอาการปวดเล็กน้อย <strong>(26d)</strong>", reason: "ไม่เป็นไปตามหลักบันไดระงับปวดของ WHO", ref: "STOPP criteria" },
+{ keywords: ["opioid"], displayDrug: "Opioid", condition: "เป็นประจำทุกวัน โดยไม่ใช้ยาระบายควบคู่ <strong>(26e)</strong>", reason: "ความเสี่ยงต่ออาการท้องผูก ควรได้รับคู่กับยาระบาย", ref: "STOPP criteria" },
+{ keywords: ["opioid"], displayDrug: "Opioid", condition: "ตามเวลา (มื้อ) ที่กำหนด โดยไม่มีการให้เสริมเมื่อมีอาการ <strong>(26f)</strong>", reason: "ความเสี่ยงต่ออาการปวดกำเริบ ควรให้เสริมระหว่างมื้อ", ref: "STOPP criteria" },
+{ keywords: ["paracetamol"], displayDrug: "Paracetamol", condition: "ขนาด  ≥  3 g/day ในผู้ที่มี BMI < 18 หรือมีโรคตับเรื้อรัง <strong>(27a)</strong>", reason: "ความเสี่ยงต่อภาวะเป็นพิษต่อตับ", ref: "STOPP criteria" },
+{ keywords: ["pioglitazone"], displayDrug: "Pioglitazone", condition: "ในผู้ที่มี HF <strong>(28a)</strong>", reason: "ความเสี่ยงต่อ HF แย่ลง", ref: "STOPP criteria" },
+{ keywords: ["spironolactone"], displayDrug: "Spironolactone", condition: "ร่วมกับ ACEI, ARB โดยไม่มีการติดตาม serum K <strong>(29a)</strong>", reason: "เพิ่มความเสี่ยงต่อภาวะ hyperkalemia ที่รุนแรง **ควรติดตาม serum K อย่างสม่ำเสมอ อย่างน้อยทุก 6 เดือน", ref: "STOPP criteria" },
+{ keywords: ["spironolactone"], displayDrug: "Spironolactone", condition: "ในผู้ที่มีค่า eGFR < 30 ml/min/1.73m² <strong>(29b)</strong>", reason: "ความเสี่ยงต่อ hyperkalemia", ref: "STOPP criteria" },
+{ keywords: ["ssri", "anticoagulant"], displayDrug: "SSRI ร่วมกับ Anticoagulant", condition: "ในผู้ที่มีประวัติ major bleeding <strong>(30a)</strong>", reason: "เพิ่มความเสี่ยงต่อเลือดออกจากฤทธิ์ต้านเกล็ดเลือดของยากลุ่ม SSRIs", ref: "STOPP criteria" },
+{ keywords: ["ssri"], displayDrug: "SSRI", condition: "ในผู้ที่มี hyponatremia (serum Na < 130 mmol/l) <strong>(30b)</strong>", reason: "เพิ่มความเสี่ยงให้ hyponatremia แย่ลง", ref: "STOPP criteria" },
+{ keywords: ["ssri"], displayDrug: "SSRI", condition: "ในผู้ที่มีประวัติ major bleeding <strong>(30c)</strong>", reason: "เพิ่มความเสี่ยงต่อ recurrent bleeding จากฤทธิ์ต้านเกล็ดเลือดของยากลุ่ม SSRI", ref: "STOPP criteria" },
+{ keywords: ["statin"], displayDrug: "Statin", condition: "สำหรับ primary CVD prevention ในผู้ที่มีอายุตั้งแต่ 85 ปีขึ้นไป โดยคาดว่าจะมีอายุขัยเหลือไม่ถึง 3 ปี <strong>(31a)</strong>", reason: "ขาดหลักฐานด้านประสิทธิภาพ", ref: "STOPP criteria" },
+{ keywords: ["steroid"], displayDrug: "Steroid", condition: "ในผู้ที่มีประวัติ peptic ulcer หรือ erosive esophagitis เว้นแต่จะใช้ร่วมกับยา PPI <strong>(32a)</strong>", reason: "เพิ่มความเสี่ยงต่อโรคกำเริบซ้ำ", ref: "STOPP criteria" },
+{ keywords: ["steroid"], displayDrug: "Steroid", condition: "ชนิดรับประทาน แทนชนิดสูดพ่นในโรค COPD <strong>(32b)</strong>", reason: "ชนิดสูดพ่นมีประสิทธิภาพ และลดความเสี่ยงต่อผลข้างเคียงระยะยาวโดยไม่จำเป็น", ref: "STOPP criteria" },
+{ keywords: ["steroid"], displayDrug: "Steroid", condition: "monotherapy เป็นระยะเวลา > 3 เดือน สำหรับ rheumatoid arthritis <strong>(32c)</strong>", reason: "ความเสี่ยงต่อผลข้างเคียงในระยะยาว", ref: "STOPP criteria" },
+{ keywords: ["steroid"], displayDrug: "Steroid", condition: "สำหรับโรคข้อเสื่อม ยกเว้นฉีดเข้าข้อเป็นบางครั้ง <strong>(32d)</strong>", reason: "ความเสี่ยงต่อผลข้างเคียงในระยะยาว", ref: "STOPP criteria" },
+{ keywords: ["tca"], displayDrug: "TCA", condition: "ในผู้ที่มีภาวะสมองเสื่อม, ต้อหินมุมปิด, การนำไฟฟ้าหัวใจผิดปกติ, ต่อมลูกหมากโต, ท้องผูกเรื้อรัง, มีประวัติหกล้ม, มีประวัติปัสสาวะไม่ออก หรือมีความดันโลหิตต่ำเมื่อเปลี่ยนท่า <strong>(33a)</strong>", reason: "เพิ่มความเสี่ยงทำให้ภาวะหรือโรคเหล่านี้แย่ลง", ref: "STOPP criteria" },
+{ keywords: ["tca"], displayDrug: "TCA", condition: "เป็นยาลำดับแรก (first-line) สำหรับโรคซึมเศร้า <strong>(33b)</strong>", reason: "ความเสี่ยงต่ออาการไม่พึงประสงค์จากยาสูงกว่ากลุ่ม SSRIs หรือ SNRIs", ref: "STOPP criteria" },
+{ keywords: ["theophylline"], displayDrug: "Theophylline", condition: "เป็นยาเดี่ยวสำหรับโรค COPD <strong>(34a)</strong>", reason: "มียาอื่นที่ปลอดภัยและมีประสิทธิภาพมากกว่า และเสี่ยงต่อผลข้างเคียงเนื่องจากยามีช่วงการรักษาแคบ", ref: "STOPP criteria" },
+{ keywords: ["theophylline"], displayDrug: "Theophylline", condition: "ร่วมกับ Ciprofloxacin <strong>(34b)</strong>", reason: "ความเสี่ยงต่อ Theophylline toxicity", ref: "Beers criteria" },
+{ keywords: ["trihexyphenidyl"], displayDrug: "trihexyphenidyl", condition: "สำหรับรักษาผลข้างเคียง extra-pyramidal จากยา antipsychotic <strong>(35a)</strong>", reason: "เพิ่มความเสี่ยงต่อ anticholinergic toxicity", ref: "STOPP criteria" },
+{ keywords: ["verapamil", "diltiazem"], displayDrug: "Verapamil หรือ diltiazem", condition: "สำหรับ HF (NYHA Class III, IV) <strong>(36a)</strong>", reason: "อาจทำให้โรคแย่ลง", ref: "STOPP criteria" },
+{ keywords: ["tca", "ssri", "snri", "gabapentin", "pregabalin", "antipsychotic", "benzodiazepine", "opioid", "muscle relaxant", "cns-active drugs"], displayDrug: "CNS-active drugs", condition: "ร่วมกันตั้งแต่ 3 ชนิด (ได้แก่ TCA, SSRI, SNRI, Gabapentin, Pregabalin, Antipsychotic, Benzodiazepine, Opioid, muscle relaxant) <strong>(37a)</strong>", reason: "เพิ่มความเสี่ยงต่อหกล้มซ้ำ", ref: "Beers criteria" }
+];
+
+const doseRules = {
+"Alfuzosin": { params: ["cp"], eval: (d, c, e, cp, alt) => { let r="10 mg/day", v=d<=10; if(cp==='B'||cp==='C'){v=false; r="Avoid use (Child-Pugh B, C)";} return {v: v, r: r}; } },
+"Allopurinol": { manualEval: true, text: "ขนาดยาทั่วไป 100-800 mg/day\neGFR >30-60 : 50 mg/day\neGFR >15-30 : 50 mg วันเว้นวัน\neGFR 5-15 : 50 mg สัปดาห์ละ 2 ครั้ง\neGFR <5 : 50 mg สัปดาห์ละ 1 ครั้ง" },
+"Alprazolam": { params: [], eval: (d) => ({v: d>=0.25&&d<=10, r: "0.25-10 mg/day"}) },
+"Amiloride/HCTZ": { manualEval: true, text: "(5/50 mg) 1-2 tablets/day\nCrCl < 10 : avoid use" },
+"Amitriptyline": { params: [], eval: (d) => ({v: d>=10&&d<=300, r: "10-300 mg/day **avoid use if possible"}) },
+"Aspirin": { params: ["cp"], eval: (d, c, e, cp, alt) => { let r="81-325 mg/day", v=d>=81&&d<=325; if(cp==='C'){v=false; r="Avoid use (Child-Pugh C)";} return {v:v, r:r}; } },
+"Atenolol": { params: ["crcl"], eval: (d, c, e, cp, alt) => { let r="25-100 mg/day", min=25, max=100; if(c!==undefined){ if(c<10){max=25; r="25 mg/day";}else if(c<=30){max=50; r="25-50 mg/day";} } return {v: d>=min&&d<=max, r:r}; } },
+"Atorvastatin": { params: ["cp"], eval: (d, c, e, cp, alt) => { let r="10-80 mg/day", min=10, max=80; if(cp==='B'||cp==='C'){max=20; r="10-20 mg/day";} return {v: d>=min&&d<=max, r:r}; } },
+"Azithromycin": { params: [], eval: (d) => ({v: d>=250&&d<=500, r: "250-500 mg/day"}) },
+"Baclofen": { manualEval: true, text: "ขนาดยาทั่วไป 5-80 mg/day\nCrCl 50-80 : 5 mg q12h (5-50 mg/day)\nCrCl 30-49 : 2.5 mg q8h (2.5-40 mg/day)\nCrCl <30 : avoid use" },
+"Bisoprolol": { params: [], eval: (d) => ({v: d>=1.25&&d<=10, r: "1.25-10 mg/day"}) },
+"Captopril": { manualEval: true, text: "ขนาดยาทั่วไป 12.5-150 mg/day\nCrCl 10-49 : every 12 to 24 hours (Max. 50 mg q12h)\nCrCl < 10 : every 24 hours (Max. 50 mg q24h)" },
+"Carvedilol": { params: ["cp"], eval: (d, c, e, cp, alt) => { let r="6.25-50 mg/day", v=d>=6.25&&d<=50; if(cp==='C'){v=false; r="Avoid use (Child-Pugh C)";} return {v:v, r:r}; } },
+"Celecoxib": { params: ["crcl", "egfr", "cp"], eval: (d, cr, eg, cp, alt) => { 
+    let r="100-400 mg/day", min=100, max=400, v=true, msgs=[];
+    if(cr!==undefined&&cr<=30){v=false; msgs.push("Avoid use (CrCl <= 30)");}
+    if(eg!==undefined&&eg>=30&&eg<=59){msgs.push("eGFR 30-59: ใช้ต่อเนื่องไม่เกิน 1 สัปดาห์");}
+    if(cp==='C'){v=false; msgs.push("Avoid use (Child-Pugh C)");}
+    else if(cp==='B'){max=Math.min(max, 200); min=Math.max(min, 50); msgs.push("Child-Pugh B: 50-200 mg/day (reduced 50%)");} 
+    if(msgs.length>0) r = msgs.join(" , "); 
+    return {v: v&&d>=min&&d<=max, r:r}; 
+} },
+"Chlorpheniramine": { params: [], eval: (d) => ({v: d>=4&&d<=24, r: "4-24 mg/day **avoid use if possible"}) },
+"Ciprofloxacin": { manualEval: true, text: "ขนาดยาทั่วไป 500-1500 mg/day\nCrCl 30-50 : 250-500 mg q12h\nCrCl <30 : 500 mg q24hr" },
+"Clonazepam": { params: ["cp"], eval: (d, c, e, cp, alt) => { let r="0.25-4 mg/day **avoid use if possible", v=d>=0.25&&d<=4; if(cp==='C'){v=false; r="Avoid use (Child-Pugh C)";} return {v:v, r:r}; } },
+"Clopidogrel": { params: [], eval: (d) => ({v: d==75, r: "75 mg/day"}) },
+"Clorazepate": { params: [], eval: (d) => ({v: d>=7.5&&d<=60, r: "7.5-60 mg/day"}) },
+"Colchicine": { params: [], eval: (d) => ({v: d>=0.6&&d<=1.8, r: "0.6-1.8 mg/day"}) },
+"Dexamethasone": { params: [], eval: (d) => ({v: d>=4&&d<=40, r: "4-40 mg/day"}) },
+"Diazepam": { params: [], eval: (d) => ({v: d>=2&&d<=40, r: "2-40 mg/day"}) },
+"Diclofenac": { params: ["crcl", "egfr"], eval: (d, cr, eg, cp, alt) => { 
+    let r="50-150 mg/day", v=true, msgs=[]; 
+    if(cr!==undefined&&cr<=30){v=false; msgs.push("Avoid use (CrCl <= 30)");}
+    if(eg!==undefined&&eg>=30&&eg<=59){msgs.push("eGFR 30-59: ใช้ต่อเนื่องไม่เกิน 1 สัปดาห์");}
+    if(msgs.length>0) r = msgs.join(" , "); 
+    return {v: v&&d>=50&&d<=150, r:r}; 
+} },
+"Dimenhydrinate": { params: [], eval: (d) => ({v: d>=50&&d<=400, r: "50-400 mg/day **avoid use if possible"}) },
+"Digoxin" : {manualEval: true, text: "  ▪️  AF/HF: do not exceed 0.125 mg/day in patients  ≥  65 years\n  ▪️  AF with CrCl 45 to <60 : 0.0625-0.125 mg once daily\n  ▪️  AF with CrCl 30 to <45 : 0.0625 mg once daily\n  ▪️  AF with CrCl <30 : 0.0625 mg every 48 hours " },
+"Doxazosin": { params: ["cp"], eval: (d, c, e, cp, alt) => { let r="1-16 mg/day", v=d>=1&&d<=16; if(cp==='C'){v=false; r="Avoid use (Child-Pugh C)";} return {v:v, r:r}; } },
+"Enalapril": { params: ["crcl"], eval: (d, c, e, cp, alt) => { let r="5-40 mg/day", min=5, max=40; if(c!==undefined){ if(c<10){min=1.25; max=10; r="1.25-10 mg/day";}else if(c<=30){min=2.5; max=20; r="2.5-20 mg/day";} } return {v: d>=min&&d<=max, r:r}; } },
+"Erythromycin": { params: [], eval: (d) => ({v: d>=1000&&d<=2000, r: "1000-2000 mg/day"}) },
+"Etoricoxib": { params: ["crcl", "egfr", "cp"], eval: (d, cr, eg, cp, alt) => { 
+    let r="30-90 mg/day", min=30, max=90, v=true, msgs=[];
+    if(cr!==undefined&&cr<30){v=false; msgs.push("Avoid use (CrCl < 30)");} 
+    if(eg!==undefined&&eg>=30&&eg<=59){msgs.push("eGFR 30-59: ใช้ต่อเนื่องไม่เกิน 1 สัปดาห์");}
+    if(cp==='C'){v=false; msgs.push("Avoid use (Child-Pugh C)");}
+    else if(cp==='B'){max=Math.min(max, 30); msgs.push("Child-Pugh B: 30 mg/day");}
+    else if(cp==='A'){max=Math.min(max, 60); msgs.push("Child-Pugh A: 30-60 mg/day");} 
+    if(msgs.length>0) r = msgs.join(" , "); 
+    return {v: v&&d>=min&&d<=max, r:r}; 
+} },
+"Ferrous fumarate (FeF)": { manualEval: true, text: "ขนาดยาทั่วไป 1 tablet/day (29-150 mg elemental iron)" },
+"Fluphenazine": { params: ["cp"], eval: (d, c, e, cp, alt) => { let r="2.5-40 mg/day", v=d>=2.5&&d<=40; if(cp==='B'||cp==='C'){v=false; r="Avoid use (Child-Pugh B, C)";} return {v:v, r:r}; } },
+"Furosemide": { params: [], eval: (d) => ({v: d>=20&&d<=160, r: "20-160 mg/day"}) },
+"Gabapentin": { params: ["crcl"], eval: (d, c, e, cp, alt) => { let r="100-3600 mg/day", min=100, max=3600; if(c!==undefined){ if(c<15){max=300; r="100-300 mg/day";}else if(c<=29){max=600; r="100-600 mg/day";}else if(c<=49){max=900; r="100-900 mg/day";}else if(c<=79){max=1800; r="100-1800 mg/day";} } return {v: d>=min&&d<=max, r:r}; } },
+"Glipizide": { params: ["egfr", "cp"], eval: (d, cr, eg, cp, alt) => { let r="2.5-40 mg/day", min=2.5, max=40, v=true, msgs=[];
+if(eg!==undefined){ if(eg<10){v=false; msgs.push("Avoid use (eGFR < 10)");}else if(eg<=49){max=Math.min(max, 20); msgs.push("eGFR 10-49: 2.5-20 mg/day");} } if(cp==='B'||cp==='C'){v=false; msgs.push("Avoid use (Child-Pugh B, C)");}else if(cp==='A'){max=Math.min(max, 20); msgs.push("Child-Pugh A: 2.5-20 mg/day");} if(msgs.length>0) r = msgs.join(" , "); return {v: v&&d>=min&&d<=max, r:r}; } },
+"Haloperidol": { params: [], eval: (d) => ({v: d>=0.5&&d<=30, r: "0.5-30 mg/day"}) },
+"HCTZ": { params: ["crcl"], eval: (d, c, e, cp, alt) => { let r="12.5-50 mg/day", v=d>=12.5&&d<=50; if(c!==undefined&&c<10){v=false; r="Avoid use (CrCl < 10)";} return {v:v, r:r}; } },
+"Hydroxyzine": { params: ["crcl", "cp"], eval: (d, cr, eg, cp, alt) => { let r="25-200 mg/day **avoid use if possible", min=25, max=200, v=true, msgs=[];
+if(cr!==undefined&&cr<50){max=Math.min(max, 100); min=Math.max(min, 12.5); msgs.push("CrCl < 50: 12.5-100 mg/day (reduced 50%)");} if(cp==='A'||cp==='B'||cp==='C'){max=Math.min(max, 25); msgs.push("Child-Pugh: 25 mg/day");} if(msgs.length>0) r = msgs.join(" , "); return {v: v&&d>=min&&d<=max, r:r}; } },
+"Hyoscine-n-butyl bromide": { params: [], eval: (d) => ({v: d>=10&&d<=60, r: "10-60 mg/day"}) },
+"Ibuprofen": { params: ["crcl", "egfr", "cp"], eval: (d, cr, eg, cp, alt) => { 
+    let r="200-3200 mg/day", v=true, msgs=[]; 
+    if(cr!==undefined&&cr<=30){v=false; msgs.push("Avoid use (CrCl <= 30)");} 
+    if(eg!==undefined&&eg>=30&&eg<=59){msgs.push("eGFR 30-59: ใช้ต่อเนื่องไม่เกิน 1 สัปดาห์");}
+    if(cp==='A'||cp==='B'||cp==='C'){v=false; msgs.push("Avoid use in hepatic impairment");} 
+    if(msgs.length>0) r = msgs.join(" , ");
+    return {v: v&&d>=200&&d<=3200, r:r}; 
+} },
+"Levodopa/benserazide": { manualEval: true, text: "ขนาดยาทั่วไป 100-1200 mg/day (base on levodopa)\nChild-Pugh C (severe) : avoid use" },
+"Levothyroxine": { manualEval: true, text: "50-200 mcg/day" },
+"Lorazepam": { params: ["cp"], eval: (d, c, e, cp, alt) => { let r="0.5-10 mg/day", min=0.5, max=10; if(cp==='B'||cp==='C'){max=5; r="0.25-5 mg/day (reduced 50%)";} return {v: d>=min&&d<=max, r:r}; } },
+"Losartan": { params: ["cp"], eval: (d, c, e, cp, alt) => { let r="25-100 mg/day", min=25, max=100; if(cp==='A'||cp==='B'||cp==='C'){max=25; r="initial 25 mg/day";} return {v: d>=min&&d<=max, r:r}; } },
+"Mefenamic acid": { params: ["egfr"], eval: (d, cr, eg, cp, alt) => { 
+    let r="250-1500 mg/day", v=true, msgs=[]; 
+    if(eg!==undefined){ 
+        if(eg<30){v=false; msgs.push("Avoid use (eGFR < 30)");}
+        else if(eg>=30&&eg<=59){msgs.push("eGFR 30-59: ใช้ต่อเนื่องไม่เกิน 1 สัปดาห์");}
+    } 
+    if(msgs.length>0) r = msgs.join(" , ");
+    return {v: v&&d>=250&&d<=1500, r:r}; 
+} },
+"Meloxicam": { params: ["egfr"], eval: (d, cr, eg, cp, alt) => { 
+    let r="7.5-15 mg/day", v=true, msgs=[]; 
+    if(eg!==undefined){
+        if(eg<30){v=false; msgs.push("Avoid use (eGFR < 30)");}
+        else if(eg>=30&&eg<=59){msgs.push("eGFR 30-59: ใช้ต่อเนื่องไม่เกิน 1 สัปดาห์");}
+    } 
+    if(msgs.length>0) r = msgs.join(" , ");
+    return {v: v&&d>=7.5&&d<=15, r:r}; 
+} },
+"Metformin": { params: ["egfr", "cp"], eval: (d, cr, eg, cp, alt) => { let r="500-2550 mg/day", min=500, max=2550, v=true, msgs=[];
+if(eg!==undefined){ if(eg<30){v=false; msgs.push("Avoid use (eGFR < 30)");}else if(eg<=45){max=Math.min(max, 1000); msgs.push("eGFR 30-45: 500-1000 mg/day");} } if(cp==='C'){v=false; msgs.push("Avoid use (Child-Pugh C)");}else if(cp==='B'){max=Math.min(max, 1500); msgs.push("Child-Pugh B: 500-1500 mg/day");} if(msgs.length>0) r = msgs.join(" , "); return {v: v&&d>=min&&d<=max, r:r}; } },
+"Methyldopa": { manualEval: true, text: "ขนาดยาทั่วไป 500-3000 mg/day **avoid use if possible\nCrCl > 50 : q8hr\nCrCl 10-50 : q8-12hr\nCrCl < 10 : q12-24hr" },
+"Metoclopramide": { params: ["crcl", "cp"], eval: (d, cr, eg, cp, alt) => { let r="10-40 mg/day (ใช้ไม่เกิน 12 สัปดาห์ ใน gastroparesis)", min=10, max=40, v=true, msgs=[];
+if(cr!==undefined){ if(cr<10){min=Math.max(min, 3.3); max=Math.min(max, 13.2); msgs.push("CrCl < 10: 3.3-13.2 mg/day");}else if(cr<=60){min=Math.max(min, 5); max=Math.min(max, 20); msgs.push("CrCl 11-60: 5-20 mg/day");} } if(cp==='B'||cp==='C'){min=Math.max(min, 5); max=Math.min(max, 20); msgs.push("Child-Pugh B, C: 5-20 mg/day");} if(msgs.length>0) r = [...new Set(msgs)].join(" , "); return {v: v&&d>=min&&d<=max, r:r}; } },
+"Metoprolol": { params: ["cp"], eval: (d, c, e, cp, alt) => { let r="50-200 mg/day", min=50, max=200, v=true; if(cp==='C'){v=false; r="Avoid use (Child-Pugh C)";}else if(cp==='B'){min=25; max=100; r="25-100 mg/day (reduced 50%)";} return {v: v && d>=min && d<=max, r:r}; } },
+"Naproxen": { params: ["crcl", "egfr", "cp"], eval: (d, cr, eg, cp, alt) => { 
+    let r="250-1500 mg/day", v=true, msgs=[]; 
+    if(cr!==undefined&&cr<30){v=false; msgs.push("Avoid use (CrCl < 30)");} 
+    if(eg!==undefined&&eg>=30&&eg<=59){msgs.push("eGFR 30-59: ใช้ต่อเนื่องไม่เกิน 1 สัปดาห์");}
+    if(cp==='A'||cp==='B'||cp==='C'){v=false; msgs.push("Avoid use in hepatic impairment");} 
+    if(msgs.length>0) r = msgs.join(" , ");
+    return {v: v&&d>=250&&d<=1500, r:r}; 
+} },
+"Nortriptyline": { params: [], eval: (d) => ({v: d>=10&&d<=150, r: "10-150 mg/day **avoid use if possible"}) },
+"Omeprazole": { params: ["cp"], eval: (d, c, e, cp, alt) => { let r="20-80 mg/day", min=20, max=80, v=true; if(cp==='C'){v=false; r="Avoid use (Child-Pugh C)";}else if(cp==='A'||cp==='B'){max=20; r="10-20 mg/day";} return {v: v && d>=min && d<=max, r:r}; } },
+"Paracetamol": { params: ["cp"], eval: (d, c, e, cp, alt) => { let r="500-4000 mg/day", min=500, max=4000; if(cp==='C'){max=2000; r="500-2000 mg/day";}else if(cp==='B'){max=3000; r="500-3000 mg/day";} return {v: d>=min&&d<=max, r:r}; } },
+"Phenobarbital": { params: ["egfr", "cp"], eval: (d, c, e, cp, alt) => { let r="30-400 mg/day **avoid use if possible", min=30, max=400; if(e!==undefined&&e<10){min=15; max=200; r="15-200 mg/day (reduced 50%)";} if(cp==='B'||cp==='C'){min=15; max=200; r="15-200 mg/day (reduced 50%)";} return {v: d>=min&&d<=max, r:r}; } },
+"Phenytoin": { params: [], eval: (d) => ({v: d>=300&&d<=600, r: "300-600 mg/day"}) },
+"Pioglitazone": { params: ["alt", "cp"], eval: (d, c, e, cp, alt) => { let r="15-45 mg/day", v=d>=15&&d<=45; if(alt==='>3'){v=false; r="Avoid use (ALT > 3x UNL)";} if(cp==='B'||cp==='C'){v=false; r="Avoid use (Child-Pugh B, C)";} return {v:v, r:r}; } },
+"Prazosin": { params: [], eval: (d) => ({v: d>=2&&d<=20, r: "2-20 mg/day **avoid use if possible"}) },
+"Prednisolone": { params: [], eval: (d) => ({v: d>=5&&d<=60, r: "5-60 mg/day"}) },
+"Pregabalin": { params: ["crcl"], eval: (d, c, e, cp, alt) => { let r="25-600 mg/day", min=25, max=600; if(c!==undefined){ if(c<15){max=75; r="25-75 mg/day (CrCl < 15)";}else if(c<=29){max=150; r="25-150 mg/day (CrCl 15-29)";}else if(c<=59){max=300; r="25-300 mg/day (CrCl 30-59)";} } return {v: d>=min&&d<=max, r:r}; } },
+"Propranolol": { params: [], eval: (d) => ({v: d>=10&&d<=160, r: "10-160 mg/day"}) },
+"Risperidone": { params: ["crcl"], eval: (d, c, e, cp, alt) => { let r="1-8 mg/day", min=1, max=8; if(c!==undefined){ if(c>=10 && c<=29){min=0.5; max=4; r="0.5-4 mg/day (reduced 50%)";}else if(c>=30 && c<=60){min=0.5; max=6; r="0.5-6 mg/day (reduced 50-75%)";} } return {v: d>=min&&d<=max, r:r}; } },
+"Rosuvastatin": { params: ["crcl", "cp"], eval: (d, cr, eg, cp, alt) => { let r="5-40 mg/day", min=5, max=40, v=true, msgs=[];
+if(cr!==undefined&&cr<30){max=Math.min(max, 10); msgs.push("CrCl < 30: max 10 mg/day");} if(cp==='C'){max=Math.min(max, 5); msgs.push("Child-Pugh C: max 5 mg/day");}else if(cp==='B'){max=Math.min(max, 10); msgs.push("Child-Pugh B: max 10 mg/day");} if(msgs.length>0) r = msgs.join(" , "); return {v: v&&d>=min&&d<=max, r:r}; } },
+"Roxithromycin": { params: ["cp"], eval: (d, c, e, cp, alt) => { let r="300 mg/day", m=300; if(cp==='C'){m=150; r="150 mg/day";} return {v: d==m, r:r}; } },
+"Sertraline": { params: ["cp"], eval: (d, c, e, cp, alt) => { let r="50-200 mg/day", min=50, max=200, v=true; if(cp==='C'){v=false; r="Avoid use (Child-Pugh C)";}else if(cp==='A'||cp==='B'){max=100; r="50-100 mg/day";} return {v: v && d>=min && d<=max, r:r}; } },
+"Simvastatin": { params: ["cp"], eval: (d, c, e, cp, alt) => { let r="10-40 mg/day", min=10, max=40; if(cp==='C'){max=20; r="10-20 mg/day (decompensate cirrhosis)";} return {v: d>=min&&d<=max, r:r}; } },
+"Sodium valproate": { manualEval: true, text: "ขนาดยาทั่วไป 10-60 mg/kg/day\nChild-Pugh B (moderate), C (severe) : avoid use" },
+"Spironolactone": { params: ["egfr"], eval: (d, c, e, cp, alt) => { let r="12.5-100 mg/day", min=12.5, max=100, v=true; if(e!==undefined){ if(e<30){v=false; r="Avoid use (eGFR < 30)";}else if(e<=50){max=25; r="12.5-25 mg/day";} } return {v: v && d>=min && d<=max, r:r}; } },
+"Theophylline": { params: [], eval: (d) => ({v: d>=300&&d<=400, r: "300-400 mg/day"}) },
+"Tolperisone": { params: [], eval: (d) => ({v: d>=150&&d<=600, r: "150-600 mg/day"}) },
+"Tramadol": { params: ["crcl", "cp"], eval: (d, cr, eg, cp, alt) => { let r="25-400 mg/day", min=25, max=400, v=true, msgs=[];
+if(cr!==undefined&&cr<30){max=Math.min(max, 200); msgs.push("CrCl < 30: max 200 mg/day *divided q12h");} if(cp==='C'){v=false; msgs.push("Avoid use (Child-Pugh C)");}else if(cp==='B'){max=Math.min(max, 100); msgs.push("Child-Pugh B: max 100 mg/day");}else if(cp==='A'){max=Math.min(max, 200); msgs.push("Child-Pugh A: max 200 mg/day");} if(msgs.length>0) r = msgs.join(" , "); return {v: v&&d>=min&&d<=max, r:r}; } },
+"Trihexyphenidyl": { params: [], eval: (d) => ({v: d>=1&&d<=15, r: "1-15 mg/day **avoid use if possible"}) },
+"Valsartan": { params: [], eval: (d) => ({v: d>=80&&d<=320, r: "80-320 mg/day"}) },
+"Verapamil": { params: [], eval: (d) => ({v: d>=120&&d<=480, r: "120-480 mg/day"}) },
+"Norfloxacin": { params:[], eval: (d) => ({v: d=400, r: "400 mg/day"})},
+"Ofloxacin": { manualEval: true, text: "CrCl 20-50 : usual dose every 24 hour\nCrCl <20 : half of usual dose every 24 hour" },
+"Amoxicillin": { manualEval: true, text: "eGFR 10-30 : 500 mg every 12 hours\neGFR <10 : 500 mg every 12-24 hours" },
+"Amoxicillin/Clavulanate": { manualEval: true, text: "CrCl 10 to <30 : 500 mg every 12 hours\nCrCl <10 : 500 mg every 12-24 hours" }
+};
+
+/* ================== APPLICATION LOGIC ================== */
+let patientData = { medications: [] };
+
+let currentSelectedDrug = "";
+let matchedCriteriaList = [];
+let specificAnswers = [];
+let requiredParams = [];
+let currentDoseValid = null;
+let currentDoseIssueText = "";
+let isManualEval = false;
+
+window.onload = function() {
+  let datalist = document.getElementById("drugList");
+  let allOptions = new Set();
+  Object.keys(drugDatabase).forEach(drug => {
+    allOptions.add(drug);
+    drugDatabase[drug].forEach(subItem => allOptions.add(subItem));
+  });
+  Array.from(allOptions).sort().forEach(item => {
+    if (item.length > 2) {
+      let option = document.createElement("option");
+      option.value = item;
+      datalist.appendChild(option);
+    }
+  });
+};
+
+// เปลี่ยนหน้า
+function goToPage(pageId) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById(pageId).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+// เลือกรหัสยา
+function onDrugSelect() {
+  currentSelectedDrug = document.getElementById("drugInput").value.trim();
+  const inputVal = currentSelectedDrug.toLowerCase();
+
+  document.getElementById("specificCriteriaContainer").innerHTML = "";
+  document.getElementById("doseSectionContainer").style.display = "none";
+  document.getElementById("inp-dose").value = "";
+  document.getElementById("inp-crcl").value = "";
+  document.getElementById("inp-egfr").value = "";
+  document.getElementById("inp-cp").value = "None";
+  document.getElementById("inp-alt").value = "";
+  document.getElementById("btn-man-dose-yes").classList.remove("active");
+  document.getElementById("btn-man-dose-no").classList.remove("active");
+
+  currentDoseValid = null;
+  currentDoseIssueText = "";
+  matchedCriteriaList = [];
+  specificAnswers = [];
+
+  if (inputVal === "") return;
+
+  let searchTerms = [inputVal];
+  for (const [drug, classes] of Object.entries(drugDatabase)) {
+    if (drug.toLowerCase() === inputVal || classes.some(c => c.toLowerCase() === inputVal)) {
+      searchTerms.push(drug.toLowerCase());
+      classes.forEach(c => searchTerms.push(c.toLowerCase()));
+    }
+  }
+
+  matchedCriteriaList = stoppRules.filter(rule => rule.keywords.some(kw => searchTerms.includes(kw.toLowerCase())));
+  
+  updateDoseUI();
+
+  if (matchedCriteriaList.length > 0) {
+    specificAnswers = new Array(matchedCriteriaList.length).fill(null);
+    renderAllSpecificQuestions();
+  } else {
+    document.getElementById("doseSectionContainer").style.display = "block";
+  }
+}
+
+// อัปเดต UI คำนวณขนาดยา
+function updateDoseUI() {
+  let foundInfo = false;
+  requiredParams = [];
+  isManualEval = false;
+  let doseRuleObj = null;
+
+  for (const [key, val] of Object.entries(doseRules)) {
+    if (key.toLowerCase() === currentSelectedDrug.toLowerCase()) {
+      doseRuleObj = val; foundInfo = true; break;
+    }
+  }
+  if(!foundInfo) {
+    for (const [drug, classes] of Object.entries(drugDatabase)) {
+      if (drug.toLowerCase() === currentSelectedDrug.toLowerCase() || classes.some(c => c.toLowerCase() === currentSelectedDrug.toLowerCase())) {
+        if(doseRules[drug]) { doseRuleObj = doseRules[drug]; foundInfo = true; break; }
+      }
+    }
+  }
+
+  if (doseRuleObj && doseRuleObj.manualEval) {
+    isManualEval = true;
+    document.getElementById("manualDoseText").innerText = doseRuleObj.text;
+  } else if (doseRuleObj && doseRuleObj.directShow) {
+    isManualEval = true;
+    document.getElementById("manualDoseText").innerText = doseRuleObj.text;
+  } else if (doseRuleObj) {
+    requiredParams = doseRuleObj.params || [];
+  }
+
+  if (isManualEval) {
+    document.getElementById("autoDoseArea").style.display = "none";
+    document.getElementById("manualDoseArea").style.display = "block";
+    document.getElementById("doseResultMsg").style.display = "none";
+  } else {
+    document.getElementById("autoDoseArea").style.display = "block";
+    document.getElementById("manualDoseArea").style.display = "none";
+    document.getElementById("doseResultMsg").style.display = "block";
+    document.getElementById("box-dose").style.display = "block";
+    document.getElementById("box-crcl").style.display = requiredParams.includes("crcl") ? "block" : "none";
+    document.getElementById("box-egfr").style.display = requiredParams.includes("egfr") ? "block" : "none";
+    document.getElementById("box-cp").style.display = requiredParams.includes("cp") ? "block" : "none";
+    document.getElementById("box-alt").style.display = requiredParams.includes("alt") ? "block" : "none";
+    evaluateDose();
+  }
+}
+
+// แสดงคำถาม STOPP
+function renderAllSpecificQuestions() {
+  const container = document.getElementById("specificCriteriaContainer");
+  container.innerHTML = "";
+  matchedCriteriaList.forEach((criteria, index) => {
+    let div = document.createElement("div");
+    div.className = "question-box";
+    div.style.display = "block";
+    div.innerHTML = `
+    <div class="question-text">
+    การใช้ยา <b>${criteria.displayDrug}</b> ${criteria.condition} ใช่หรือไม่?
+    <div style="font-size:0.85em; color:#7f8c8d; margin-top:8px;">[${criteria.ref}]</div>
+    </div>
+    <div class="btn-group">
+    <button class="btn-outline-yes" id="btn-spec-${index}-yes" onclick="answerSpecific(${index}, true, '${criteria.reason}')">ใช่</button>
+    <button class="btn-outline-no" id="btn-spec-${index}-no" onclick="answerSpecific(${index}, false)">ไม่ใช่</button>
+    </div>
+    <div id="stopResultMsg-${index}" class="stop-result"></div>
+    `;
+    container.appendChild(div);
+  });
+}
+
+// ตอบคำถาม STOPP
+function answerSpecific(index, isYes, reason) {
+  document.getElementById(`btn-spec-${index}-yes`).classList.toggle("active", isYes);
+  document.getElementById(`btn-spec-${index}-no`).classList.toggle("active", !isYes);
+  const resultMsg = document.getElementById(`stopResultMsg-${index}`);
+
+  if (isYes) {
+    resultMsg.innerHTML = ` ❌️ STOP (${reason})`;
+    resultMsg.style.display = "block";
+  } else {
+    resultMsg.style.display = "none";
+  }
+
+  specificAnswers[index] = isYes;
+  const anyYes = specificAnswers.some(ans => ans === true);
+  const allAnswered = specificAnswers.every(ans => ans !== null);
+
+  if (anyYes) {
+    document.getElementById("doseSectionContainer").style.display = "none";
+  } else if (allAnswered && specificAnswers.every(ans => ans === false)) {
+    document.getElementById("doseSectionContainer").style.display = "block";
+  }
+}
+
+// คำนวณขนาดยา (แมนนวล)
+function answerManualDose(isValid) {
+  document.getElementById("btn-man-dose-yes").classList.toggle("active", isValid);
+  document.getElementById("btn-man-dose-no").classList.toggle("active", !isValid);
+  currentDoseValid = isValid;
+  currentDoseIssueText = isValid ? "" : "ประเมินด้วยตนเอง: ขนาดยาไม่เหมาะสม";
+}
+
+// คำนวณขนาดยา (ออโต้)
+function evaluateDose() {
+  if (isManualEval) return;
+
+  const doseStr = document.getElementById("inp-dose").value;
+  const crclStr = document.getElementById("inp-crcl").value;
+  const egfrStr = document.getElementById("inp-egfr").value;
+  const cpStr = document.getElementById("inp-cp").value;
+  const altStr = document.getElementById("inp-alt").value;
+  const doseResultDiv = document.getElementById("doseResultMsg");
+
+  if (!currentSelectedDrug) return;
+
+  let doseRuleObj = null;
+  for (const [key, val] of Object.entries(doseRules)) {
+    if (key.toLowerCase() === currentSelectedDrug.toLowerCase()) { doseRuleObj = val; break; }
+  }
+
+  if(!doseRuleObj) {
+    for (const [drug, classes] of Object.entries(drugDatabase)) {
+      if (drug.toLowerCase() === currentSelectedDrug.toLowerCase() || classes.some(c => c.toLowerCase() === currentSelectedDrug.toLowerCase())) {
+        if(doseRules[drug]) { doseRuleObj = doseRules[drug]; break; }
+      }
+    }
+  }
+
+  if (doseRuleObj) {
+    let missing = false;
+    if (!doseStr) missing = true;
+    if (requiredParams.includes("crcl") && !crclStr) missing = true;
+    if (requiredParams.includes("egfr") && !egfrStr) missing = true;
+    if (requiredParams.includes("cp") && (!cpStr || cpStr === "")) missing = true;
+    if (requiredParams.includes("alt") && (!altStr || altStr === "")) missing = true;
+
+    if (missing) {
+      doseResultDiv.innerHTML = "<span style='color:#e67e22; font-weight:bold;'>กรุณาระบุข้อมูลให้ครบถ้วน</span><div style='font-size:0.85em; color:#7f8c8d; margin-top:8px;'>[UpToDate Lexidrug]</div>";
+      currentDoseValid = null;
+      currentDoseIssueText = "";
+    } else {
+      const dose = parseFloat(doseStr);
+      let crcl = crclStr !== "" ? parseFloat(crclStr) : undefined;
+      let egfr = egfrStr !== "" ? parseFloat(egfrStr) : undefined;
+      let cp = cpStr !== "" && cpStr !== "None" ? cpStr : undefined;
+      let alt = altStr !== "" && altStr !== "normal" ? altStr : undefined;
+
+      let result = doseRuleObj.eval(dose, crcl, egfr, cp, alt);
+      currentDoseValid = result.v;
+
+      if (result.v) {
+        currentDoseIssueText = "";
+        doseResultDiv.innerHTML = `<span style="color:#27ae60; font-weight:bold;"> ✅ ขนาดยาเหมาะสม</span> <br><small>ขนาดยาที่แนะนำ: <span style="color:#2980b9;">${result.r}</span></small><div style='font-size:0.85em; color:#7f8c8d; margin-top:8px;'>[UpToDate Lexidrug]</div>`;
+      } else {
+        currentDoseIssueText = result.r;
+        doseResultDiv.innerHTML = `<span style="color:#c0392b; font-weight:bold;"> ❌ ขนาดยาไม่เหมาะสม</span> <br><small>ขนาดยาที่เหมาะสมคือ: <span style="color:#2980b9; font-weight:bold;">${result.r}</span></small><div style='font-size:0.85em; color:#7f8c8d; margin-top:8px;'>[UpToDate Lexidrug]</div>`;
+      }
+    }
+  } else {
+    if (!doseStr) {
+      doseResultDiv.innerHTML = "<span style='color:#e67e22; font-weight:bold;'>กรุณาระบุข้อมูลให้ครบถ้วน</span><div style='font-size:0.85em; color:#7f8c8d; margin-top:8px;'>[UpToDate Lexidrug]</div>";
+      currentDoseValid = null;
+      currentDoseIssueText = "";
+    } else {
+      currentDoseValid = true;
+      currentDoseIssueText = "";
+      doseResultDiv.innerHTML = `<span style="color:#27ae60; font-weight:bold;"> ✅ ขนาดยาเหมาะสม</span> <br><small style='color:#7f8c8d;'>(เบื้องต้น) ไม่พบเงื่อนไขขนาดยาพิเศษสำหรับยานี้ในระบบ</small><div style='font-size:0.85em; color:#7f8c8d; margin-top:8px;'>[UpToDate Lexidrug]</div>`;
+    }
+  }
+}
+
+// เพิ่มยาที่กำลังประเมินเข้าตะกร้าผู้ป่วย
+function addCurrentDrug() {
+  if (!currentSelectedDrug) {
+    alert("กรุณาค้นหาและเลือกรายการยาก่อนบันทึก");
+    return;
+  }
+  
+  let stoppIssues = [];
+  matchedCriteriaList.forEach((criteria, index) => {
+    if (specificAnswers[index] === true) {
+      stoppIssues.push(criteria.condition.replace(/<[^>]*>?/gm, '')); // ลบ tag HTML (strong) ออกก่อนเก็บข้อมูล
+    }
+  });
+  
+  let doseIssue = null;
+  if (currentDoseValid === false) {
+    doseIssue = currentDoseIssueText || "ขนาดยาไม่เหมาะสม";
+  }
+  
+  patientData.medications.push({
+    drug: currentSelectedDrug,
+    stopp: stoppIssues,
+    doseIssue: doseIssue
+  });
+  
+  renderAddedDrugs();
+  
+  document.getElementById("drugInput").value = "";
+  onDrugSelect(); 
+  alert("เพิ่มประวัติยา " + currentSelectedDrug + " สำเร็จ!");
+}
+
+// อัปเดตรายการยาที่เพิ่มแล้วในหน้าจอ
+function renderAddedDrugs() {
+  const container = document.getElementById("addedDrugsContainer");
+  const list = document.getElementById("addedDrugsList");
+  list.innerHTML = "";
+  
+  if (patientData.medications.length === 0) {
+    container.style.display = "none";
+    return;
+  }
+  
+  container.style.display = "block";
+  patientData.medications.forEach((m, idx) => {
+    let html = `<strong>${idx+1}. ${m.drug}</strong>`;
+    if (m.stopp.length > 0) {
+      html += `<br><span style="color:#c0392b; font-size: 0.9em;">- STOPP: ${m.stopp.join(', ')}</span>`;
+    }
+    if (m.doseIssue) {
+      html += `<br><span style="color:#c0392b; font-size: 0.9em;">- Dose ไม่เหมาะสม: ${m.doseIssue}</span>`;
+    }
+    if (m.stopp.length === 0 && !m.doseIssue) {
+      html += `<br><span style="color:#27ae60; font-size: 0.9em;">- ไม่พบความเสี่ยง</span>`;
+    }
+    list.innerHTML += `<div class="added-drug-card">${html}</div>`;
+  });
+}
+
+// ดึงและส่งข้อมูลไปบันทึก
+function submitData() {
+  // รวบรวมข้อมูลหน้า 1
+  let data = {
+    name: document.getElementById('p_name').value,
+    age: document.getElementById('p_age').value,
+    gender: document.querySelector('input[name="p_gender"]:checked')?.value || "",
+    underlying: [],
+    allergy: document.querySelector('input[name="p_allergy"]:checked')?.value || "",
+    supplement: document.querySelector('input[name="p_supp"]:checked')?.value || "",
+    falls: document.getElementById('p_falls').value,
+    drugItems: document.getElementById('p_items').value,
+    drugPills: document.getElementById('p_pills').value,
+    medications: patientData.medications,
+    interventions: []
+  };
+  
+  document.querySelectorAll('.p_ud:checked').forEach(cb => data.underlying.push(cb.value));
+  if (document.getElementById('p_ud_others_check').checked) {
+    let otherUd = document.getElementById('p_ud_others').value;
+    if (otherUd) data.underlying.push(`Others: ${otherUd}`);
+  }
+  
+  document.querySelectorAll('.p_interv:checked').forEach(cb => data.interventions.push(cb.value));
+  if (document.getElementById('p_interv_others_check').checked) {
+    let otherInt = document.getElementById('p_interv_others').value;
+    if (otherInt) data.interventions.push(`Others: ${otherInt}`);
+  }
+  
+  if (!data.name) {
+    alert("กรุณากรอกชื่อ-สกุลผู้ป่วย");
+    goToPage('page1');
+    return;
+  }
+  
+  let btn = document.getElementById('btnSave');
+  btn.innerText = "⏳ กำลังบันทึกข้อมูล...";
+  btn.disabled = true;
+  
+  // เรียกใช้งานฟังก์ชันฝั่ง Google Apps Script
+  google.script.run.withSuccessHandler(function(res) {
+    alert(res);
+    clearFormAndReset();
+  }).withFailureHandler(function(err) {
+    alert("Error: " + err.message);
+    btn.innerText = "💾 บันทึกข้อมูลทั้งหมดลง Google Sheet";
+    btn.disabled = false;
+  }).savePatientData(data);
+}
+
+// ล้างข้อมูลทั้งหมดหลังบันทึกสำเร็จ
+function clearFormAndReset() {
+  document.querySelectorAll('input[type="text"], input[type="number"]').forEach(i => i.value = '');
+  document.querySelectorAll('input[type="radio"], input[type="checkbox"]').forEach(i => i.checked = false);
+  document.getElementById('p_ud_others').style.display = 'none';
+  document.getElementById('p_interv_others').style.display = 'none';
+  
+  patientData.medications = [];
+  renderAddedDrugs();
+  goToPage('page1');
+  
+  let btn = document.getElementById('btnSave');
+  btn.innerText = "💾 บันทึกข้อมูลทั้งหมดลง Google Sheet";
+  btn.disabled = false;
+}
+</script>
+</body>
+</html>
